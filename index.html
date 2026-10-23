@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelVault Games</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  body{background:#0b0d17;font-family:system-ui,sans-serif}
+  .display{font-family:'Chakra Petch',system-ui,sans-serif}
+  .panel{background:#141829;border:1px solid #232a47}
+  .vip-on{box-shadow:0 0 0 1px #fbbf24,0 0 24px rgba(251,191,36,.25)}
+  :focus-visible{outline:2px solid #22d3ee;outline-offset:2px}
+</style>
+</head>
+<body class="text-slate-200 min-h-screen">
+
+<header class="sticky top-0 z-20 bg-[#0b0d17]/90 backdrop-blur border-b border-[#232a47]">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-4">
+    <h1 class="display text-2xl font-bold text-violet-400 mr-auto">PixelVault <span class="text-cyan-300">Games</span></h1>
+    <nav class="flex gap-2">
+      <button id="tab-tienda" onclick="setTab('tienda')" class="px-4 py-2 rounded-lg text-sm font-medium">Tienda</button>
+      <button id="tab-arriendos" onclick="setTab('arriendos')" class="px-4 py-2 rounded-lg text-sm font-medium">Arriendos</button>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="puntos" class="text-sm text-amber-300 hidden"></span>
+      <button id="vipBtn" onclick="toggleVIP()" role="switch" aria-checked="false"
+        class="flex items-center gap-2 px-3 py-2 rounded-full border border-slate-600 text-sm transition">
+        <span id="vipDot" class="w-8 h-4 rounded-full bg-slate-700 relative transition"><span id="vipKnob" class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-slate-300 transition-all"></span></span>
+        Modo Cliente VIP
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+
+  <!-- TIENDA: RF1 + RF2 -->
+  <section id="tienda" class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input id="q" oninput="renderCatalogo()" placeholder="Buscar juego…" aria-label="Buscar juego"
+          class="flex-1 min-w-[10rem] bg-[#141829] border border-[#232a47] rounded-lg px-3 py-2 text-sm">
+        <select id="fPlat" onchange="renderCatalogo()" aria-label="Plataforma" class="bg-[#141829] border border-[#232a47] rounded-lg px-3 py-2 text-sm">
+          <option value="">Todas las plataformas</option><option>PS5</option><option>XBOX</option><option>SWITCH</option><option>PC</option>
+        </select>
+        <select id="fFmt" onchange="renderCatalogo()" aria-label="Formato" class="bg-[#141829] border border-[#232a47] rounded-lg px-3 py-2 text-sm">
+          <option value="">Físico y digital</option><option value="FISICO">Físico</option><option value="DIGITAL">Digital</option>
+        </select>
+      </div>
+      <div id="grid" class="grid sm:grid-cols-2 gap-4"></div>
+    </div>
+
+    <aside class="panel rounded-xl p-4 h-fit lg:sticky lg:top-20">
+      <h2 class="display text-lg font-bold mb-3">Carrito</h2>
+      <div id="cart" class="space-y-2 mb-4"></div>
+      <div class="flex gap-2 mb-1">
+        <input id="cupon" placeholder="Cupón (PIXEL10, GAMER5)" aria-label="Cupón" class="flex-1 min-w-0 bg-[#0b0d17] border border-[#232a47] rounded-lg px-3 py-2 text-sm">
+        <button onclick="aplicarCupon()" class="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm">Aplicar cupón</button>
+      </div>
+      <p id="cuponMsg" class="text-xs h-4 mb-3"></p>
+      <dl id="totales" class="text-sm space-y-1 border-t border-[#232a47] pt-3"></dl>
+      <button onclick="checkout()" class="w-full mt-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 font-medium">Pagar</button>
+    </aside>
+  </section>
+
+  <!-- ARRIENDOS: RF3 + RF4 -->
+  <section id="arriendos" class="hidden grid lg:grid-cols-3 gap-6">
+    <div class="panel rounded-xl p-4 h-fit">
+      <h2 class="display text-lg font-bold mb-3">Nuevo arriendo</h2>
+      <label class="text-sm block mb-1" for="aProd">Juego físico</label>
+      <select id="aProd" onchange="previewArriendo()" class="w-full bg-[#0b0d17] border border-[#232a47] rounded-lg px-3 py-2 text-sm mb-3"></select>
+      <label class="text-sm block mb-1" for="aDias">Días de arriendo</label>
+      <input id="aDias" type="number" min="1" max="30" value="3" oninput="previewArriendo()" class="w-full bg-[#0b0d17] border border-[#232a47] rounded-lg px-3 py-2 text-sm mb-3">
+      <div id="aPrev" class="text-sm space-y-1 border-t border-[#232a47] pt-3 mb-4"></div>
+      <button onclick="crearArriendo()" class="w-full py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-medium">Registrar arriendo</button>
+    </div>
+    <div class="lg:col-span-2">
+      <h2 class="display text-lg font-bold mb-3">Arriendos registrados</h2>
+      <div id="aList" class="space-y-3"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+/* ===== Modelo de dominio (nombres de la Vista Lógica) ===== */
+const CLP = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(Math.round(n));
+const $ = s => document.querySelector(s);
+
+class Producto {
+  constructor(id,nombre,plataforma,formato,precio,stock){ Object.assign(this,{id,nombre,plataforma,formato,precio,stock}); }
+  verificarStock(c=1){ return this.stock >= c; }
+  descontarStock(c=1){ if(!this.verificarStock(c)) return false; this.stock -= c; return true; }
+  reponerStock(c=1){ this.stock += c; }
+}
+class Catalogo {
+  constructor(productos){ this.productos = productos; }
+  buscar(texto){ const t = texto.trim().toLowerCase(); return this.productos.filter(p => p.nombre.toLowerCase().includes(t)); }
+  filtrar(plataforma, formato, base=this.productos){ return base.filter(p => (!plataforma || p.plataforma===plataforma) && (!formato || p.formato===formato)); }
+  consultarStock(id){ return this.productos.find(p => p.id===id).stock; }
+}
+class Cupon {
+  constructor(codigo,porcentajeDescuento){ Object.assign(this,{codigo,porcentajeDescuento,activo:true}); }
+  esValido(){ return this.activo; }
+  calcularDescuento(subtotal){ return this.esValido() ? subtotal*this.porcentajeDescuento : 0; }
+}
+class ItemCarrito {
+  constructor(producto,cantidad){ this.producto = producto; this.cantidad = cantidad; }
+  calcularSubtotalItem(){ return this.producto.precio * this.cantidad; }
+}
+class Venta {
+  static TASA_IVA = 0.19;
+  static contador = 0;
+  constructor(carrito){
+    this.idVenta = 'V-' + String(++Venta.contador).padStart(4,'0');
+    this.fecha = new Date();
+    this.subtotal = carrito.calcularSubtotal();
+    this.descuento = carrito.calcularDescuento();
+    this.iva = carrito.calcularIVA();
+    this.total = carrito.calcularTotal();
+  }
+}
+class Carrito {
+  constructor(){ this.items = []; this.cupon = null; }
+  agregarProducto(p){
+    if(!p.verificarStock(1)) return false;           // RF1: verificación de stock
+    p.descontarStock(1);
+    const it = this.items.find(i => i.producto.id===p.id);
+    it ? it.cantidad++ : this.items.push(new ItemCarrito(p,1));
+    return true;
+  }
+  quitarProducto(id){
+    const it = this.items.find(i => i.producto.id===id); if(!it) return;
+    it.producto.reponerStock(1); it.cantidad--;
+    if(it.cantidad===0) this.items = this.items.filter(i => i!==it);
+  }
+  calcularSubtotal(){ return this.items.reduce((s,i) => s + i.calcularSubtotalItem(), 0); }
+  calcularDescuento(){ return this.cupon ? this.cupon.calcularDescuento(this.calcularSubtotal()) : 0; }
+  calcularIVA(){ return (this.calcularSubtotal() - this.calcularDescuento()) * Venta.TASA_IVA; }
+  calcularTotal(){ return this.calcularSubtotal() - this.calcularDescuento() + this.calcularIVA(); }
+  checkout(){ const v = new Venta(this); this.items = []; this.cupon = null; return v; }
+}
+class ProgramaVIP {
+  static DESCUENTO_ARRIENDO = 0.10;
+  static calcularDescuento(monto){ return monto * ProgramaVIP.DESCUENTO_ARRIENDO; }
+  static calcularPuntos(monto){ return Math.floor(monto/1000); }   // 1 punto por cada $1.000
+}
+class Cliente {
+  constructor(rut,nombre){ Object.assign(this,{rut,nombre,esVIP:false,puntos:0}); }
+  acumularPuntos(monto){ if(this.esVIP) this.puntos += ProgramaVIP.calcularPuntos(monto); }
+}
+class Multa {
+  static TARIFA_POR_DIA = 1500;
+  constructor(diasAtraso){ this.diasAtraso = diasAtraso; }
+  calcular(){ return this.diasAtraso * Multa.TARIFA_POR_DIA; }
+}
+class Arriendo {
+  static TARIFA_DIARIA = 2500;
+  static contador = 0;
+  constructor(producto,dias,esVIP){
+    this.idArriendo = 'A-' + String(++Arriendo.contador).padStart(4,'0');
+    this.producto = producto;
+    this.diasArriendo = dias;
+    this.fechaInicio = new Date();
+    this.fechaLimite = new Date(Date.now() + dias*86400000);
+    this.tarifaDiaria = Arriendo.TARIFA_DIARIA;
+    this.descuentoVIP = esVIP ? ProgramaVIP.DESCUENTO_ARRIENDO : 0;
+    this.diasTranscurridos = 0;
+    this.devuelto = false;
+  }
+  get diasAtraso(){ return Math.max(0, this.diasTranscurridos - this.diasArriendo); }
+  get estado(){ return this.devuelto ? 'DEVUELTO' : (this.diasAtraso>0 ? 'ATRASADO' : 'ACTIVO'); }
+  calcularMulta(diasAtraso){ return new Multa(diasAtraso).calcular(); }
+  calcularBase(){ return this.tarifaDiaria * this.diasArriendo * (1 - this.descuentoVIP); }
+  calcularTotal(){ return this.calcularBase() + this.calcularMulta(this.diasAtraso); }
+  registrarDevolucion(){ this.devuelto = true; this.producto.reponerStock(1); }
+}
+
+/* ===== Datos y estado ===== */
+const catalogo = new Catalogo([
+  new Producto('P01','God of War Ragnarök','PS5','FISICO',44990,8),
+  new Producto('P02','Halo Infinite','XBOX','FISICO',29990,5),
+  new Producto('P03','Zelda: Tears of the Kingdom','SWITCH','FISICO',49990,6),
+  new Producto('P04','Cyberpunk 2077','PC','DIGITAL',24990,20),
+  new Producto('P05','Spider-Man 2','PS5','DIGITAL',54990,15),
+  new Producto('P06','Forza Horizon 5','XBOX','DIGITAL',34990,12),
+  new Producto('P07','Mario Kart 8 Deluxe','SWITCH','FISICO',46990,4),
+  new Producto('P08','Elden Ring','PC','FISICO',39990,3)
+]);
+const carrito = new Carrito();
+const cliente = new Cliente('12.345.678-9','Jugador Demo');
+const arriendos = [];
+const CUPONES = { PIXEL10: new Cupon('PIXEL10',0.10), GAMER5: new Cupon('GAMER5',0.05) };
+const PLAT_COLOR = { PS5:'bg-blue-500/20 text-blue-300', XBOX:'bg-green-500/20 text-green-300', SWITCH:'bg-red-500/20 text-red-300', PC:'bg-slate-500/30 text-slate-200' };
+
+/* ===== Interfaz ===== */
+function toast(msg, ok=true){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'fixed bottom-5 right-5 z-30 px-4 py-2 rounded-lg text-sm shadow-lg text-white ' + (ok ? 'bg-emerald-600' : 'bg-rose-600');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.className='hidden', 2400);
+}
+function setTab(t){
+  ['tienda','arriendos'].forEach(x => {
+    $('#'+x).classList.toggle('hidden', x!==t);
+    $('#tab-'+x).className = 'px-4 py-2 rounded-lg text-sm font-medium ' + (x===t ? 'bg-violet-600 text-white' : 'text-slate-300 hover:bg-slate-800');
+  });
+  if(t==='arriendos') renderArriendos();
+}
+function toggleVIP(){
+  cliente.esVIP = !cliente.esVIP;
+  const on = cliente.esVIP;
+  $('#vipBtn').setAttribute('aria-checked', on);
+  $('#vipBtn').className = 'flex items-center gap-2 px-3 py-2 rounded-full border text-sm transition ' + (on ? 'border-amber-400 text-amber-300 vip-on' : 'border-slate-600');
+  $('#vipDot').className = 'w-8 h-4 rounded-full relative transition ' + (on ? 'bg-amber-400' : 'bg-slate-700');
+  $('#vipKnob').style.left = on ? '1.1rem' : '0.125rem';
+  renderPuntos(); previewArriendo();
+  toast(on ? 'Modo VIP activo: 10% de descuento en arriendos' : 'Modo VIP desactivado');
+}
+function renderPuntos(){
+  const el = $('#puntos');
+  el.classList.toggle('hidden', !cliente.esVIP);
+  el.textContent = cliente.puntos + ' puntos';
+}
+
+/* Catálogo (RF1) */
+function renderCatalogo(){
+  const lista = catalogo.filtrar($('#fPlat').value, $('#fFmt').value, catalogo.buscar($('#q').value));
+  $('#grid').innerHTML = lista.length ? lista.map(p => `
+    <article class="panel rounded-xl p-4 flex flex-col">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xs px-2 py-0.5 rounded ${PLAT_COLOR[p.plataforma]}">${p.plataforma}</span>
+        <span class="text-xs text-slate-400">${p.formato==='FISICO' ? 'Físico' : 'Digital'}</span>
+      </div>
+      <h3 class="display font-bold text-base leading-snug mb-1">${p.nombre}</h3>
+      <p class="text-xl text-cyan-300 font-semibold">${CLP(p.precio)}</p>
+      <p class="text-xs mt-1 mb-3 ${p.stock<=3 ? 'text-amber-300' : 'text-slate-400'}">${p.stock>0 ? 'Stock: '+p.stock+' unidades' : 'Sin stock'}</p>
+      <button onclick="agregar('${p.id}')" ${p.stock===0 ? 'disabled' : ''}
+        class="mt-auto py-2 rounded-lg text-sm font-medium ${p.stock===0 ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-500'}">
+        ${p.stock===0 ? 'Agotado' : 'Agregar al carrito'}</button>
+    </article>`).join('')
+    : '<p class="text-slate-400 col-span-full">No hay juegos que coincidan con tu búsqueda. Prueba con otro nombre o quita los filtros.</p>';
+}
+function agregar(id){
+  const p = catalogo.productos.find(x => x.id===id);
+  if(!carrito.agregarProducto(p)) toast('No queda stock de ' + p.nombre, false);
+  renderCatalogo(); renderCarrito();
+}
+
+/* Carrito (RF2) */
+function renderCarrito(){
+  $('#cart').innerHTML = carrito.items.length ? carrito.items.map(i => `
+    <div class="flex items-center gap-2 text-sm">
+      <span class="flex-1 min-w-0 truncate">${i.producto.nombre}</span>
+      <button onclick="quitar('${i.producto.id}')" aria-label="Quitar una unidad" class="w-6 h-6 rounded bg-slate-700 hover:bg-slate-600">−</button>
+      <span class="w-5 text-center">${i.cantidad}</span>
+      <button onclick="agregar('${i.producto.id}')" aria-label="Agregar una unidad" class="w-6 h-6 rounded bg-slate-700 hover:bg-slate-600">+</button>
+      <span class="w-24 text-right">${CLP(i.calcularSubtotalItem())}</span>
+    </div>`).join('')
+    : '<p class="text-sm text-slate-400">Tu carrito está vacío. Agrega un juego desde el catálogo.</p>';
+  const fila = (a,b,cls='') => `<div class="flex justify-between ${cls}"><dt>${a}</dt><dd>${b}</dd></div>`;
+  $('#totales').innerHTML =
+    fila('Subtotal', CLP(carrito.calcularSubtotal())) +
+    (carrito.cupon ? fila('Cupón ' + carrito.cupon.codigo, '−' + CLP(carrito.calcularDescuento()), 'text-emerald-300') : '') +
+    fila('IVA (19%)', CLP(carrito.calcularIVA())) +
+    fila('Total', CLP(carrito.calcularTotal()), 'text-lg font-bold text-cyan-300 pt-1');
+}
+function quitar(id){ carrito.quitarProducto(id); renderCatalogo(); renderCarrito(); }
+function aplicarCupon(){
+  const c = CUPONES[$('#cupon').value.trim().toUpperCase()];
+  const msg = $('#cuponMsg');
+  if(c){ carrito.cupon = c; msg.textContent = 'Cupón aplicado: ' + (c.porcentajeDescuento*100) + '% de descuento'; msg.className = 'text-xs h-4 mb-3 text-emerald-300'; }
+  else { carrito.cupon = null; msg.textContent = 'Cupón no válido. Revisa el código e inténtalo de nuevo.'; msg.className = 'text-xs h-4 mb-3 text-rose-300'; }
+  renderCarrito();
+}
+function checkout(){
+  if(!carrito.items.length) return toast('Agrega al menos un juego antes de pagar', false);
+  const v = carrito.checkout();
+  cliente.acumularPuntos(v.total);
+  $('#cupon').value = ''; $('#cuponMsg').textContent = '';
+  renderCarrito(); renderPuntos();
+  toast('Venta ' + v.idVenta + ' confirmada por ' + CLP(v.total));
+}
+
+/* Arriendos (RF3 + RF4) */
+function previewArriendo(){
+  const dias = Math.max(1, parseInt($('#aDias').value) || 1);
+  const bruto = Arriendo.TARIFA_DIARIA * dias;
+  const desc = cliente.esVIP ? ProgramaVIP.calcularDescuento(bruto) : 0;
+  $('#aPrev').innerHTML =
+    `<div class="flex justify-between"><span>Tarifa diaria</span><span>${CLP(Arriendo.TARIFA_DIARIA)}</span></div>` +
+    `<div class="flex justify-between"><span>${dias} día(s)</span><span>${CLP(bruto)}</span></div>` +
+    (cliente.esVIP ? `<div class="flex justify-between text-amber-300"><span>Descuento VIP 10%</span><span>−${CLP(desc)}</span></div>` : '') +
+    `<div class="flex justify-between font-bold text-cyan-300 text-base pt-1"><span>Total</span><span>${CLP(bruto-desc)}</span></div>`;
+}
+function crearArriendo(){
+  const p = catalogo.productos.find(x => x.id===$('#aProd').value);
+  const dias = Math.max(1, parseInt($('#aDias').value) || 1);
+  if(!p || !p.descontarStock(1)) return toast('No hay copias disponibles para arrendar', false);
+  const a = new Arriendo(p, dias, cliente.esVIP);
+  arriendos.unshift(a);
+  renderCatalogo(); renderArriendos();
+  toast('Arriendo ' + a.idArriendo + ' registrado');
+}
+function actualizarDias(id, v){
+  const a = arriendos.find(x => x.idArriendo===id);
+  a.diasTranscurridos = Math.max(0, parseInt(v) || 0);
+  renderArriendos();
+}
+function devolver(id){
+  const a = arriendos.find(x => x.idArriendo===id);
+  a.registrarDevolucion();
+  renderCatalogo(); renderArriendos();
+  toast('Devolución registrada. Total a pagar: ' + CLP(a.calcularTotal()), a.diasAtraso===0);
+}
+function renderArriendos(){
+  const sel = $('#aProd'), actual = sel.value;
+  sel.innerHTML = catalogo.productos.filter(p => p.formato==='FISICO')
+    .map(p => `<option value="${p.id}" ${p.stock===0?'disabled':''}>${p.nombre} (${p.plataforma}) · stock ${p.stock}</option>`).join('');
+  if(actual) sel.value = actual;
+  previewArriendo();
+  const col = { ACTIVO:'bg-emerald-500/20 text-emerald-300', ATRASADO:'bg-rose-500/20 text-rose-300', DEVUELTO:'bg-slate-500/30 text-slate-300' };
+  $('#aList').innerHTML = arriendos.length ? arriendos.map(a => `
+    <article class="panel rounded-xl p-4">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <h3 class="display font-bold">${a.producto.nombre}</h3>
+        <span class="text-xs px-2 py-0.5 rounded ${col[a.estado]}">${a.estado}</span>
+        ${a.descuentoVIP ? '<span class="text-xs px-2 py-0.5 rounded bg-amber-400/20 text-amber-300">VIP −10%</span>' : ''}
+        <span class="ml-auto text-xs text-slate-400">${a.idArriendo}</span>
+      </div>
+      <div class="grid sm:grid-cols-4 gap-3 text-sm items-end">
+        <div><p class="text-slate-400 text-xs">Días contratados</p><p>${a.diasArriendo}</p></div>
+        <div><p class="text-slate-400 text-xs">Fecha límite</p><p>${a.fechaLimite.toLocaleDateString('es-CL')}</p></div>
+        <label class="block"><span class="text-slate-400 text-xs">Días transcurridos</span>
+          <input type="number" min="0" value="${a.diasTranscurridos}" ${a.devuelto?'disabled':''} onchange="actualizarDias('${a.idArriendo}',this.value)"
+            class="w-full bg-[#0b0d17] border border-[#232a47] rounded-lg px-2 py-1.5 disabled:opacity-50"></label>
+        <div><p class="text-slate-400 text-xs">Días de atraso</p><p class="${a.diasAtraso ? 'text-rose-300' : ''}">${a.diasAtraso}</p></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-[#232a47] text-sm">
+        <span>Arriendo: ${CLP(a.calcularBase())}</span>
+        <span class="${a.diasAtraso ? 'text-rose-300' : 'text-slate-400'}">Multa: ${CLP(a.calcularMulta(a.diasAtraso))}</span>
+        <span class="font-bold text-cyan-300">Total: ${CLP(a.calcularTotal())}</span>
+        ${a.devuelto ? '' : `<button onclick="devolver('${a.idArriendo}')" class="ml-auto px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500">Registrar devolución</button>`}
+      </div>
+    </article>`).join('')
+    : '<p class="text-slate-400">Aún no hay arriendos. Elige un juego físico y registra el primero.</p>';
+}
+
+/* Inicio */
+setTab('tienda'); renderCatalogo(); renderCarrito(); renderPuntos();
+</script>
+</body>
+</html>
